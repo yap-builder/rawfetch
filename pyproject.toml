@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grab"
+version = "0.1.0"
+description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "youtube-transcript-api>=1.2,<2",
+    "trafilatura==2.0.0",
+    "lxml-html-clean==0.4.5",
+    "requests>=2.31",
+]
+
+[project.scripts]
+grab = "grab:main"
+
+[tool.setuptools]
+py-modules = ["grab", "youtube_fetch", "website_fetch", "errors"]

@@ -1,0 +1,4 @@
+youtube-transcript-api>=1.2,<2
+trafilatura==2.0.0
+lxml-html-clean==0.4.5
+requests>=2.31
