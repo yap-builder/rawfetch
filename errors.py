@@ -1,4 +1,4 @@
-"""Shared error contract for grab: one exception, distinct exit codes per failure class."""
+"""Shared error contract for rawfetch: one exception, distinct exit codes per failure class."""
 
 EXIT_UNEXPECTED = 1
 EXIT_USAGE = 2
@@ -8,7 +8,7 @@ EXIT_UNAVAILABLE = 5
 EXIT_WEBSITE_FAILED = 6
 
 
-class GrabError(Exception):
+class RawfetchError(Exception):
     """Known fetch failure: message goes to stderr, exit_code to the shell."""
 
     def __init__(self, message, exit_code):

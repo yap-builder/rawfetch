@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""YouTube transcript adapter for grab (verbatim capture, zero LLM).
+"""YouTube transcript adapter for rawfetch (verbatim capture, zero LLM).
 
 WHY: an AI assistant can't pull YouTube captions itself — this adapter turns a video URL
 into the raw caption text. Capture, not judgment: plain space-join of caption snippets,
@@ -13,13 +13,13 @@ from youtube_transcript_api._errors import (
     IpBlocked, RequestBlocked, PoTokenRequired, AgeRestricted,
 )
 
-from errors import GrabError, EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE
+from errors import RawfetchError, EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE
 
 OEMBED = "https://www.youtube.com/oembed"
 
 
 def fetch(video_id, url, languages=None):
-    """Return {"title": str|None, "text": str}. Raises GrabError on known failures."""
+    """Return {"title": str|None, "text": str}. Raises RawfetchError on known failures."""
     langs = list(languages) if languages else ["en"]
     api = YouTubeTranscriptApi()
     try:
@@ -28,27 +28,27 @@ def fetch(video_id, url, languages=None):
         except NoTranscriptFound:
             transcript = _any_available(api, video_id)
     except (TranscriptsDisabled, NoTranscriptFound):
-        raise GrabError(
+        raise RawfetchError(
             "no captions: this video has no transcripts at all "
             "(subtitles disabled or missing)", EXIT_NO_CAPTIONS)
     except PoTokenRequired:
-        raise GrabError(
+        raise RawfetchError(
             "blocked: YouTube demands a PO token for this request "
             "(common on datacenter IPs; try a residential IP)", EXIT_BLOCKED)
     except IpBlocked:
-        raise GrabError(
+        raise RawfetchError(
             "blocked: YouTube has blocked this IP for transcript requests "
             "(common on datacenter IPs; try a residential IP)", EXIT_BLOCKED)
     except RequestBlocked:
-        raise GrabError(
+        raise RawfetchError(
             "blocked: YouTube rejected the request (bot protection); "
             "try again later or from a residential IP", EXIT_BLOCKED)
     except AgeRestricted:
-        raise GrabError(
+        raise RawfetchError(
             "video unavailable: age-restricted, captions need a signed-in "
-            "session which grab does not do", EXIT_UNAVAILABLE)
+            "session which rawfetch does not do", EXIT_UNAVAILABLE)
     except VideoUnavailable:
-        raise GrabError(
+        raise RawfetchError(
             "video unavailable: private, deleted or region-locked",
             EXIT_UNAVAILABLE)
     text = " ".join(s.text for s in transcript.snippets)

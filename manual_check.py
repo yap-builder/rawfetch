@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual LIVE check for grab — deliberately NOT pytest.
+"""Manual LIVE check for rawfetch — deliberately NOT pytest.
 
 WHY: YouTube captions are IP-gated (datacenter IPs get blocked), so live calls in the
 test suite would flap on CI. Run this by hand on a residential IP and eyeball that the
@@ -12,10 +12,10 @@ YT = sys.argv[1] if len(sys.argv) > 1 else "https://www.youtube.com/watch?v=jNQX
 ART = sys.argv[2] if len(sys.argv) > 2 else "https://peps.python.org/pep-0020/"
 
 CASES = [
-    ["/usr/bin/python3", "grab.py", YT],
-    ["/usr/bin/python3", "grab.py", YT, "--json"],
-    ["/usr/bin/python3", "grab.py", ART],
-    ["/usr/bin/python3", "grab.py", "https://www.youtube.com/watch?v=aaaaaaaaaaa"],  # expect nonzero
+    ["/usr/bin/python3", "rawfetch.py", YT],
+    ["/usr/bin/python3", "rawfetch.py", YT, "--json"],
+    ["/usr/bin/python3", "rawfetch.py", ART],
+    ["/usr/bin/python3", "rawfetch.py", "https://www.youtube.com/watch?v=aaaaaaaaaaa"],  # expect nonzero
 ]
 
 for cmd in CASES:

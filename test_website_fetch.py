@@ -4,7 +4,7 @@ import os
 import pytest
 
 import website_fetch
-from errors import GrabError
+from errors import RawfetchError
 
 FIXTURE = os.path.join(os.path.dirname(__file__), "tests", "fixtures", "article.html")
 
@@ -36,7 +36,7 @@ def test_fetch_happy_path(monkeypatch):
 def test_http_error_exit6(monkeypatch):
     monkeypatch.setattr(website_fetch.requests, "get",
                         lambda *a, **k: FakeResp(404, "nope"))
-    with pytest.raises(GrabError) as ei:
+    with pytest.raises(RawfetchError) as ei:
         website_fetch.fetch("https://example.com/gone")
     assert ei.value.exit_code == 6
 
@@ -45,7 +45,7 @@ def test_network_error_exit6(monkeypatch):
     def boom(*a, **k):
         raise website_fetch.requests.ConnectionError("refused")
     monkeypatch.setattr(website_fetch.requests, "get", boom)
-    with pytest.raises(GrabError) as ei:
+    with pytest.raises(RawfetchError) as ei:
         website_fetch.fetch("https://example.com/x")
     assert ei.value.exit_code == 6
 
@@ -53,6 +53,6 @@ def test_network_error_exit6(monkeypatch):
 def test_empty_extraction_exit6(monkeypatch):
     monkeypatch.setattr(website_fetch.requests, "get",
                         lambda *a, **k: FakeResp(200, "<html><body><script>1</script></body></html>"))
-    with pytest.raises(GrabError) as ei:
+    with pytest.raises(RawfetchError) as ei:
         website_fetch.fetch("https://example.com/spa")
     assert ei.value.exit_code == 6

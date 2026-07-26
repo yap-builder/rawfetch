@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "grab"
+name = "rawfetch"
 version = "0.1.0"
 description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
 readme = "README.md"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-grab = "grab:main"
+rawfetch = "rawfetch:main"
 
 [tool.setuptools]
-py-modules = ["grab", "youtube_fetch", "website_fetch", "errors"]
+py-modules = ["rawfetch", "youtube_fetch", "website_fetch", "errors"]

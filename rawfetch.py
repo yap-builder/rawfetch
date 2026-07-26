@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""grab — verbatim text from sources your AI can't reach. One command, zero LLM.
+"""rawfetch — verbatim text from sources your AI can't reach. One command, zero LLM.
 
-WHY: pasting a YouTube link into an AI assistant gets a guess; grab prints the actual
+WHY: pasting a YouTube link into an AI assistant gets a guess; rawfetch prints the actual
 captions. Capture, not judgment: raw text to stdout, honest classed errors to stderr
 (no captions != IP block != video gone). YouTube today; X threads and Reddit planned;
 plain websites included as a fallback.
@@ -17,18 +17,18 @@ import sys
 
 import website_fetch
 import youtube_fetch
-from errors import GrabError, EXIT_UNEXPECTED, EXIT_USAGE
+from errors import RawfetchError, EXIT_UNEXPECTED, EXIT_USAGE
 
 
 def route(url):
-    """Classify url -> ("youtube", video_id) or ("website", None). GrabError on junk."""
+    """Classify url -> ("youtube", video_id) or ("website", None). RawfetchError on junk."""
     if not re.match(r"^https?://", url):
-        raise GrabError("not an http(s) URL: {}".format(url), EXIT_USAGE)
+        raise RawfetchError("not an http(s) URL: {}".format(url), EXIT_USAGE)
     host = re.match(r"^https?://([^/]+)", url).group(1).lower().split(":")[0]
     if host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com"):
         vid = _video_id(url, host)
         if not vid:
-            raise GrabError(
+            raise RawfetchError(
                 "youtube URL, but no 11-char video id found in it", EXIT_USAGE)
         return "youtube", vid
     return "website", None
@@ -47,7 +47,7 @@ def _video_id(url, host):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        prog="grab",
+        prog="rawfetch",
         description="Print verbatim text from a URL: YouTube captions, or the "
                     "article text of a plain web page. No LLM, no summaries.")
     parser.add_argument("url")
@@ -64,11 +64,11 @@ def main(argv=None):
             result = youtube_fetch.fetch(video_id, args.url, languages=languages)
         else:
             result = website_fetch.fetch(args.url)
-    except GrabError as e:
-        print("grab: {}".format(e), file=sys.stderr)
+    except RawfetchError as e:
+        print("rawfetch: {}".format(e), file=sys.stderr)
         return e.exit_code
     except Exception as e:  # honest catch-all: report, never fabricate
-        print("grab: unexpected error: {!r}".format(e), file=sys.stderr)
+        print("rawfetch: unexpected error: {!r}".format(e), file=sys.stderr)
         return EXIT_UNEXPECTED
     if args.as_json:
         print(json.dumps({"source_type": source_type, "url": args.url,

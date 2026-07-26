@@ -2,7 +2,7 @@
 import pytest
 
 import youtube_fetch
-from errors import GrabError
+from errors import RawfetchError
 from youtube_transcript_api._errors import (
     TranscriptsDisabled, NoTranscriptFound, VideoUnavailable,
     IpBlocked, RequestBlocked, PoTokenRequired, AgeRestricted,
@@ -88,7 +88,7 @@ def test_fallback_to_any_available(monkeypatch):
 def test_no_transcripts_at_all_exit3(monkeypatch):
     api = make_api(fetch_raises=exc(NoTranscriptFound), listed=[])
     monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
-    with pytest.raises(GrabError) as ei:
+    with pytest.raises(RawfetchError) as ei:
         youtube_fetch.fetch("v" * 11, "u")
     assert ei.value.exit_code == 3
 
@@ -104,7 +104,7 @@ def test_no_transcripts_at_all_exit3(monkeypatch):
 def test_error_classes_map_to_exit_codes(monkeypatch, cls, code):
     api = make_api(fetch_raises=exc(cls))
     monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
-    with pytest.raises(GrabError) as ei:
+    with pytest.raises(RawfetchError) as ei:
         youtube_fetch.fetch("v" * 11, "u")
     assert ei.value.exit_code == code
 
@@ -114,7 +114,7 @@ def test_messages_differ_between_classes(monkeypatch):
     for cls in (TranscriptsDisabled, IpBlocked, VideoUnavailable):
         api = make_api(fetch_raises=exc(cls))
         monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
-        with pytest.raises(GrabError) as ei:
+        with pytest.raises(RawfetchError) as ei:
             youtube_fetch.fetch("v" * 11, "u")
         msgs[cls.__name__] = str(ei.value)
     assert len(set(msgs.values())) == 3
