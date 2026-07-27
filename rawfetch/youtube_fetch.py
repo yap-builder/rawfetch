@@ -17,7 +17,8 @@ from youtube_transcript_api._errors import (
 )
 
 from rawfetch.errors import (
-    RawfetchError, EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE)
+    RawfetchError, network_error,
+    EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE)
 
 OEMBED = "https://www.youtube.com/oembed"
 
@@ -55,6 +56,12 @@ def fetch(video_id, url, languages=None):
         raise RawfetchError(
             "video unavailable: private, deleted or region-locked",
             EXIT_UNAVAILABLE)
+    except requests.RequestException as e:
+        # The library talks to YouTube through requests, honouring HTTPS_PROXY /
+        # HTTP_PROXY from the environment. DNS failures, refused connections,
+        # timeouts and dead proxies all surface here — a different fact than
+        # "YouTube answered and said no" (exit 4/5).
+        raise network_error(e)
     text = " ".join(s.text for s in transcript.snippets)
     if not text.strip():
         # A transcript that exists but carries no words is a failure, not a success:

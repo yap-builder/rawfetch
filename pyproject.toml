@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rawfetch"
-version = "0.1.1"
+version = "0.2.0"
 description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
 readme = "README.md"
 license = {text = "MIT"}

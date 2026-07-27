@@ -12,7 +12,7 @@ gigabytes of RSS and minutes of CPU. A cap fails fast and honestly instead.
 import requests
 import trafilatura
 
-from rawfetch.errors import RawfetchError, EXIT_WEBSITE_FAILED
+from rawfetch.errors import RawfetchError, network_error, EXIT_WEBSITE_FAILED
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
       "(KHTML, like Gecko) Version/17.0 Safari/605.1.15")
@@ -26,7 +26,9 @@ def fetch(url):
     try:
         resp = requests.get(url, timeout=30, headers={"User-Agent": UA}, stream=True)
     except requests.RequestException as e:
-        raise RawfetchError("website fetch failed: {}".format(e), EXIT_WEBSITE_FAILED)
+        # Transport failure = exit 7, same as the YouTube path: "could not reach the
+        # site" is a different fact than "reached it, nothing extractable" (exit 6).
+        raise network_error(e)
     # Closed explicitly: with stream=True the connection stays checked out of the pool
     # until the body is drained or the response is closed, and the size cap deliberately
     # stops draining early.
@@ -69,7 +71,8 @@ def _read_capped(resp):
                 raise RawfetchError(_too_large(None), EXIT_WEBSITE_FAILED)
             chunks.append(chunk)
     except requests.RequestException as e:
-        raise RawfetchError("website fetch failed: {}".format(e), EXIT_WEBSITE_FAILED)
+        # Connection dying mid-body is still a transport failure.
+        raise network_error(e)
     raw = b"".join(chunks)
     if resp.encoding:
         # Header charset wins: it is what the server says the bytes are. Bytes that do

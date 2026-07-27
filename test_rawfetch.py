@@ -1,5 +1,6 @@
 """Offline tests for routing and the CLI contract (adapters mocked)."""
 import json
+import socket
 
 import pytest
 
@@ -98,6 +99,40 @@ def test_main_unexpected_exit1(monkeypatch, capsys):
     rc = cli.main(["https://example.com/x"])
     assert rc == 1
     assert "unexpected" in capsys.readouterr().err
+
+
+def _refused_local_port():
+    """A localhost port that was just free — connecting to it gets refused, fast."""
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+@pytest.fixture
+def dead_proxy_env(monkeypatch):
+    """Route everything through a proxy that refuses connections. Offline by design:
+    the real libraries run, but the only connection attempted is to localhost."""
+    proxy = "http://127.0.0.1:{}".format(_refused_local_port())
+    monkeypatch.setenv("HTTPS_PROXY", proxy)
+    monkeypatch.setenv("HTTP_PROXY", proxy)
+    for var in ("NO_PROXY", "no_proxy"):
+        monkeypatch.delenv(var, raising=False)
+
+
+def test_dead_proxy_youtube_is_exit7_not_unexpected(dead_proxy_env, capsys):
+    """End-to-end proof that env proxies are honoured on the YouTube path and that a
+    broken proxy lands as a classed network error, not exit 1."""
+    rc = cli.main(["https://www.youtube.com/watch?v=jNQXAC9IVRw"])
+    assert rc == 7
+    assert "network error" in capsys.readouterr().err
+
+
+def test_dead_proxy_website_is_exit7_not_unexpected(dead_proxy_env, capsys):
+    rc = cli.main(["https://example.com/article"])
+    assert rc == 7
+    assert "network error" in capsys.readouterr().err
 
 
 def test_version_flag_prints_version(capsys):

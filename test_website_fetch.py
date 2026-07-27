@@ -54,13 +54,30 @@ def test_http_error_exit6(monkeypatch):
     assert ei.value.exit_code == 6
 
 
-def test_network_error_exit6(monkeypatch):
+def test_network_error_exit7(monkeypatch):
+    """Transport failures (DNS, refused, dead proxy) are exit 7 on this path too:
+    'could not reach the site' is a different fact than 'reached it, nothing there'."""
     def boom(*a, **k):
         raise website_fetch.requests.ConnectionError("refused")
     monkeypatch.setattr(website_fetch.requests, "get", boom)
     with pytest.raises(RawfetchError) as ei:
         website_fetch.fetch("https://example.com/x")
-    assert ei.value.exit_code == 6
+    assert ei.value.exit_code == 7
+    assert "network error" in str(ei.value)
+
+
+def test_midstream_network_error_exit7(monkeypatch):
+    """Connection dying while the body streams is still a network error, not exit 6."""
+    class BreaksMidStream(FakeResp):
+        def iter_content(self, chunk_size=1):
+            yield b"<html><body>partial"
+            raise website_fetch.requests.ConnectionError("connection reset")
+
+    monkeypatch.setattr(website_fetch.requests, "get",
+                        lambda *a, **k: BreaksMidStream(200, ""))
+    with pytest.raises(RawfetchError) as ei:
+        website_fetch.fetch("https://example.com/x")
+    assert ei.value.exit_code == 7
 
 
 def test_empty_extraction_exit6(monkeypatch):

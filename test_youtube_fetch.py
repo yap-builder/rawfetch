@@ -1,5 +1,6 @@
 """Offline tests for the YouTube adapter: fakes for the instance API, no network."""
 import pytest
+import requests
 
 from rawfetch import youtube_fetch
 from rawfetch.errors import RawfetchError
@@ -117,6 +118,45 @@ def test_error_classes_map_to_exit_codes(monkeypatch, cls, code):
     with pytest.raises(RawfetchError) as ei:
         youtube_fetch.fetch("v" * 11, "u")
     assert ei.value.exit_code == code
+
+
+@pytest.mark.parametrize("transport_exc", [
+    requests.exceptions.ProxyError("proxy refused the connection"),
+    requests.exceptions.ConnectionError("dns lookup failed"),
+    requests.exceptions.Timeout("read timed out"),
+])
+def test_transport_errors_exit7(monkeypatch, transport_exc):
+    """A dead network or broken proxy is a classed failure, not 'unexpected error'."""
+    api = make_api(fetch_raises=transport_exc)
+    monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
+    with pytest.raises(RawfetchError) as ei:
+        youtube_fetch.fetch("v" * 11, "u")
+    assert ei.value.exit_code == 7
+    assert "network error" in str(ei.value)
+
+
+def test_network_error_names_proxy_scheme_never_credentials(monkeypatch):
+    """When env proxies are in effect the message says so — but proxy URLs can carry
+    user:pass, so only the scheme names may appear, never the values."""
+    monkeypatch.setenv("HTTPS_PROXY", "http://user:sekretpass@127.0.0.1:9")
+    api = make_api(fetch_raises=requests.exceptions.ProxyError("boom"))
+    monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
+    with pytest.raises(RawfetchError) as ei:
+        youtube_fetch.fetch("v" * 11, "u")
+    msg = str(ei.value)
+    assert "proxy" in msg
+    assert "sekretpass" not in msg and "127.0.0.1:9" not in msg
+
+
+def test_network_error_without_proxy_env_has_no_proxy_hint(monkeypatch):
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+                "http_proxy", "https_proxy", "all_proxy"):
+        monkeypatch.delenv(var, raising=False)
+    api = make_api(fetch_raises=requests.exceptions.ConnectionError("refused"))
+    monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
+    with pytest.raises(RawfetchError) as ei:
+        youtube_fetch.fetch("v" * 11, "u")
+    assert "proxy" not in str(ei.value)
 
 
 def test_messages_differ_between_classes(monkeypatch):

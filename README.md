@@ -21,6 +21,11 @@ pip install .
 
 Python 3.9+.
 
+If pip prints a warning that the `rawfetch` script landed in a directory *not on
+your PATH* (common with `pip install --user`: `~/.local/bin` on Linux,
+`~/Library/Python/3.X/bin` on macOS), add that directory to your PATH — or skip
+the problem entirely with `python -m rawfetch <url>`.
+
 ## Usage
 
 ```bash
@@ -62,13 +67,29 @@ available transcript; it fails only when the video has no captions at all.
 | 4 | blocked by YouTube (IP / bot protection / PO token) |
 | 5 | video unavailable (private, deleted, region-locked, age-restricted) |
 | 6 | website fetch failed (HTTP error, nothing extractable, or over the size cap) |
+| 7 | network error: never reached the source at all (DNS, refused connection, timeout, or a broken proxy) |
 
 ## YouTube caveat
 
 Caption access is IP-gated by YouTube. From a normal residential IP it just
 works; from servers and datacenter IPs YouTube often blocks transcript
 requests or demands a PO token (exit code 4). If you hit that, run rawfetch from
-a home connection or route it through a residential proxy.
+a home connection or route it through a residential proxy (see below).
+
+## Proxies
+
+rawfetch honours the standard `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY`
+environment variables on both paths — YouTube and websites go through `requests`,
+which reads them. This is the practical answer to the caveat above when you have
+to run from a server:
+
+```bash
+HTTPS_PROXY=http://user:pass@proxy.example:8080 rawfetch <youtube-url>
+```
+
+A proxy that can't be reached is exit code 7 (network error), and the error
+message notes that an environment proxy was in effect — when you see that, the
+proxy itself is the usual suspect. Proxy credentials are never echoed back.
 
 ## Website fallback
 
