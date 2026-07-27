@@ -1,8 +1,8 @@
 """Offline tests for the YouTube adapter: fakes for the instance API, no network."""
 import pytest
 
-import youtube_fetch
-from errors import RawfetchError
+from rawfetch import youtube_fetch
+from rawfetch.errors import RawfetchError
 from youtube_transcript_api._errors import (
     TranscriptsDisabled, NoTranscriptFound, VideoUnavailable,
     IpBlocked, RequestBlocked, PoTokenRequired, AgeRestricted,
@@ -62,6 +62,16 @@ def test_join_is_verbatim(monkeypatch):
     out = youtube_fetch.fetch("v" * 11, "u")
     assert out["text"] == "hello world\nfoo"
     assert out["title"] == "stub-title"
+
+
+def test_empty_transcript_is_exit3_not_silent_success(monkeypatch):
+    """A transcript with no words must fail loudly, not print nothing with exit 0."""
+    api = make_api(fetch_result=FakeTranscript(["", "   ", "\n"]))
+    monkeypatch.setattr(youtube_fetch, "YouTubeTranscriptApi", api)
+    with pytest.raises(RawfetchError) as ei:
+        youtube_fetch.fetch("v" * 11, "u")
+    assert ei.value.exit_code == 3
+    assert "no text" in str(ei.value)
 
 
 def test_lang_priority_passed_in_order(monkeypatch):

@@ -4,11 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rawfetch"
-version = "0.1.0"
+version = "0.1.1"
 description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
+authors = [{name = "yap-builder"}]
+keywords = ["youtube", "transcript", "captions", "scraping", "verbatim", "cli", "agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing",
+    "Topic :: Utilities",
+]
 dependencies = [
     "youtube-transcript-api>=1.2,<2",
     "trafilatura==2.0.0",
@@ -16,8 +32,13 @@ dependencies = [
     "requests>=2.31",
 ]
 
+[project.urls]
+Homepage = "https://github.com/yap-builder/rawfetch"
+Source = "https://github.com/yap-builder/rawfetch"
+Issues = "https://github.com/yap-builder/rawfetch/issues"
+
 [project.scripts]
-rawfetch = "rawfetch:main"
+rawfetch = "rawfetch.cli:main"
 
 [tool.setuptools]
-py-modules = ["rawfetch", "youtube_fetch", "website_fetch", "errors"]
+packages = ["rawfetch"]

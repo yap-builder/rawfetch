@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
-"""rawfetch — verbatim text from sources your AI can't reach. One command, zero LLM.
+"""Command line entry point: route a URL to the right adapter, print verbatim text.
 
-WHY: pasting a YouTube link into an AI assistant gets a guess; rawfetch prints the actual
-captions. Capture, not judgment: raw text to stdout, honest classed errors to stderr
-(no captions != IP block != video gone). YouTube today; X threads and Reddit planned;
-plain websites included as a fallback.
+Routing is deliberately dumb and readable — host match, then video id — so a reader can
+tell at a glance which source a URL will hit. No network happens in this module.
 """
-import warnings
-
-warnings.filterwarnings("ignore")  # urllib3 NotOpenSSLWarning noise on LibreSSL Macs
-
 import argparse
 import json
 import re
 import sys
 
-import website_fetch
-import youtube_fetch
-from errors import RawfetchError, EXIT_UNEXPECTED, EXIT_USAGE
+from rawfetch import __version__, website_fetch, youtube_fetch
+from rawfetch.errors import RawfetchError, EXIT_UNEXPECTED, EXIT_USAGE
 
 
 def route(url):
@@ -55,6 +48,8 @@ def main(argv=None):
                         help="caption language priority for YouTube (ordered)")
     parser.add_argument("--json", action="store_true", dest="as_json",
                         help="print {source_type, url, title, text} as JSON")
+    parser.add_argument("--version", action="version",
+                        version="rawfetch {}".format(__version__))
     args = parser.parse_args(argv)
     try:
         source_type, video_id = route(args.url)

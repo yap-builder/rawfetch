@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-import website_fetch
-from errors import RawfetchError
+from rawfetch import website_fetch
+from rawfetch.errors import RawfetchError
 
 FIXTURE = os.path.join(os.path.dirname(__file__), "tests", "fixtures", "article.html")
 
@@ -15,9 +15,17 @@ def fixture_html():
 
 
 class FakeResp:
-    def __init__(self, status_code, text=""):
+    """Mimics the streamed response rawfetch actually consumes."""
+
+    def __init__(self, status_code, text="", headers=None, encoding="utf-8"):
         self.status_code = status_code
-        self.text = text
+        self._body = text.encode(encoding) if isinstance(text, str) else text
+        self.headers = headers if headers is not None else {}
+        self.encoding = encoding
+
+    def iter_content(self, chunk_size=1):
+        for i in range(0, len(self._body), chunk_size):
+            yield self._body[i:i + chunk_size]
 
 
 def test_extract_text_from_real_article():
@@ -51,8 +59,58 @@ def test_network_error_exit6(monkeypatch):
 
 
 def test_empty_extraction_exit6(monkeypatch):
-    monkeypatch.setattr(website_fetch.requests, "get",
-                        lambda *a, **k: FakeResp(200, "<html><body><script>1</script></body></html>"))
+    monkeypatch.setattr(
+        website_fetch.requests, "get",
+        lambda *a, **k: FakeResp(200, "<html><body><script>1</script></body></html>"))
     with pytest.raises(RawfetchError) as ei:
         website_fetch.fetch("https://example.com/spa")
     assert ei.value.exit_code == 6
+
+
+def test_declared_oversize_refused_without_reading(monkeypatch):
+    """Content-Length over the cap must fail before a single chunk is buffered."""
+    class NeverRead(FakeResp):
+        def iter_content(self, chunk_size=1):
+            raise AssertionError("body must not be read when the size is declared")
+
+    huge = str(website_fetch.MAX_BYTES + 1)
+    monkeypatch.setattr(
+        website_fetch.requests, "get",
+        lambda *a, **k: NeverRead(200, "x", headers={"Content-Length": huge}))
+    with pytest.raises(RawfetchError) as ei:
+        website_fetch.fetch("https://example.com/huge")
+    assert ei.value.exit_code == 6
+    assert "larger than" in str(ei.value)
+
+
+def test_streamed_oversize_refused(monkeypatch):
+    """No Content-Length: the cap must still trip while streaming."""
+    body = "a" * (website_fetch.MAX_BYTES + 1024)
+    monkeypatch.setattr(website_fetch.requests, "get",
+                        lambda *a, **k: FakeResp(200, body))
+    with pytest.raises(RawfetchError) as ei:
+        website_fetch.fetch("https://example.com/huge")
+    assert ei.value.exit_code == 6
+    assert "larger than" in str(ei.value)
+
+
+def test_body_just_under_cap_is_accepted(monkeypatch):
+    """The cap must not reject an ordinary long article."""
+    padding = "<p>filler</p>" * 1000
+    html = fixture_html() + padding
+    assert len(html.encode("utf-8")) < website_fetch.MAX_BYTES
+    monkeypatch.setattr(website_fetch.requests, "get",
+                        lambda *a, **k: FakeResp(200, html))
+    out = website_fetch.fetch("https://example.com/long")
+    assert "Beautiful is better than ugly" in out["text"]
+
+
+def test_non_utf8_body_decodes(monkeypatch):
+    """Declared encoding is honoured rather than assumed."""
+    html = "<html><body><article><p>Ünïcödé tëxt that is long enough to extract properly " \
+           "so trafilatura keeps it as a real paragraph of content.</p></article></body></html>"
+    monkeypatch.setattr(
+        website_fetch.requests, "get",
+        lambda *a, **k: FakeResp(200, html.encode("latin-1"), encoding="latin-1"))
+    out = website_fetch.fetch("https://example.com/latin")
+    assert "Ünïcödé" in out["text"]

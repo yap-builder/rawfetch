@@ -27,7 +27,10 @@ Python 3.9+.
 rawfetch <url>                # verbatim text to stdout
 rawfetch <url> --lang ru,en   # YouTube caption language priority (ordered)
 rawfetch <url> --json         # {"source_type", "url", "title", "text"}
+rawfetch --version
 ```
+
+Also runs as `python -m rawfetch <url>`.
 
 Real output, truncated:
 
@@ -55,10 +58,10 @@ available transcript; it fails only when the video has no captions at all.
 | 0 | success |
 | 1 | unexpected error |
 | 2 | bad URL / usage |
-| 3 | no captions on this video |
+| 3 | no captions on this video (none at all, or an empty transcript) |
 | 4 | blocked by YouTube (IP / bot protection / PO token) |
 | 5 | video unavailable (private, deleted, region-locked, age-restricted) |
-| 6 | website fetch failed |
+| 6 | website fetch failed (HTTP error, nothing extractable, or over the size cap) |
 
 ## YouTube caveat
 
@@ -73,6 +76,18 @@ Any non-YouTube URL is fetched as a plain web page and the main article text
 is extracted verbatim. Static articles and blog posts work; JS-heavy apps and
 paywalled pages may extract to nothing — rawfetch reports that honestly (exit
 code 6) instead of inventing content.
+
+## Limits worth knowing
+
+**Size cap.** Page bodies over 5 MiB are refused (exit code 6) rather than buffered.
+Article extraction allocates several times the input size, so an unbounded read turns a
+fat URL into gigabytes of memory and minutes of CPU. rawfetch targets articles, not bulk
+downloads.
+
+**No URL filtering.** rawfetch fetches whatever URL you hand it, including `localhost`
+and private network addresses — same as `curl` or any other HTTP client. That is a
+property, not a feature: if you are driving rawfetch from an agent, do not feed it URLs
+from untrusted input.
 
 ## Roadmap
 

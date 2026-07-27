@@ -5,6 +5,9 @@ WHY: an AI assistant can't pull YouTube captions itself — this adapter turns a
 into the raw caption text. Capture, not judgment: plain space-join of caption snippets,
 no cleanup. Errors are classed (no captions != IP block != video gone) so the user can
 tell what actually happened. Title comes from keyless oEmbed and is never fatal.
+
+Except-order is load-bearing: IpBlocked subclasses RequestBlocked, so swapping those two
+blocks would make the IP-block message unreachable. Same for AgeRestricted/VideoUnavailable.
 """
 import requests
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -13,7 +16,8 @@ from youtube_transcript_api._errors import (
     IpBlocked, RequestBlocked, PoTokenRequired, AgeRestricted,
 )
 
-from errors import RawfetchError, EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE
+from rawfetch.errors import (
+    RawfetchError, EXIT_NO_CAPTIONS, EXIT_BLOCKED, EXIT_UNAVAILABLE)
 
 OEMBED = "https://www.youtube.com/oembed"
 
@@ -52,6 +56,11 @@ def fetch(video_id, url, languages=None):
             "video unavailable: private, deleted or region-locked",
             EXIT_UNAVAILABLE)
     text = " ".join(s.text for s in transcript.snippets)
+    if not text.strip():
+        # A transcript that exists but carries no words is a failure, not a success:
+        # printing nothing with exit 0 would read as "this video has no speech".
+        raise RawfetchError(
+            "no captions: a transcript exists but contains no text", EXIT_NO_CAPTIONS)
     return {"title": _title(url), "text": text}
 
 
