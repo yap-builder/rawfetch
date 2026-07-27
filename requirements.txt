@@ -1,4 +1,4 @@
-youtube-transcript-api>=1.2,<2
-trafilatura==2.0.0
-lxml-html-clean==0.4.5
-requests>=2.31
+# Runtime dependencies live in pyproject.toml — that is the single source of truth.
+# This file only exists so `pip install -r requirements.txt` does the expected thing;
+# a second copy of the pin list here would let the two drift apart silently.
+.

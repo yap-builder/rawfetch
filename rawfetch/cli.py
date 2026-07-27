@@ -15,9 +15,10 @@ from rawfetch.errors import RawfetchError, EXIT_UNEXPECTED, EXIT_USAGE
 
 def route(url):
     """Classify url -> ("youtube", video_id) or ("website", None). RawfetchError on junk."""
-    if not re.match(r"^https?://", url):
+    # Scheme is case-insensitive per RFC 3986; browsers and curl accept HTTPS://.
+    if not re.match(r"^https?://", url, re.IGNORECASE):
         raise RawfetchError("not an http(s) URL: {}".format(url), EXIT_USAGE)
-    m = re.match(r"^https?://([^/]+)", url)
+    m = re.match(r"^https?://([^/]+)", url, re.IGNORECASE)
     if not m:
         # "https://" and "https:///path" have a scheme but no host. Without this the
         # regex returns None and the caller sees a bare AttributeError as exit 1.
@@ -34,7 +35,7 @@ def route(url):
 
 def _video_id(url, host):
     if host == "youtu.be":
-        m = re.match(r"^https?://youtu\.be/([A-Za-z0-9_-]{11})", url)
+        m = re.match(r"^https?://youtu\.be/([A-Za-z0-9_-]{11})", url, re.IGNORECASE)
         return m.group(1) if m else None
     m = re.search(r"[?&]v=([A-Za-z0-9_-]{11})", url)
     if m:

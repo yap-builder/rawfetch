@@ -16,6 +16,8 @@ from rawfetch.errors import RawfetchError
     ("https://www.youtube.com/shorts/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
     ("https://www.youtube.com/live/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
     ("https://www.youtube.com/embed/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    ("HTTPS://WWW.YOUTUBE.COM/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),  # scheme+host case
+    ("HTTPS://youtu.be/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
 ])
 def test_route_youtube(url, vid):
     assert cli.route(url) == ("youtube", vid)
@@ -25,6 +27,7 @@ def test_route_youtube(url, vid):
     "https://example.com/article",
     "http://blog.example.org/post?v=dQw4w9WgXcQ",   # v= param on non-youtube host
     "https://myyoutube.com/watch?v=dQw4w9WgXcQ",     # lookalike host
+    "HTTP://Example.COM/article",                    # uppercase scheme, plain site
 ])
 def test_route_website(url):
     assert cli.route(url) == ("website", None)
