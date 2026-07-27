@@ -89,6 +89,12 @@ and private network addresses — same as `curl` or any other HTTP client. That 
 property, not a feature: if you are driving rawfetch from an agent, do not feed it URLs
 from untrusted input.
 
+**Encoding.** When the server declares a charset, that is what the bytes are decoded as,
+and bytes that do not fit it become `U+FFFD` rather than aborting the run. When no charset
+is declared, the raw bytes go to the extractor, which reads the page's own `meta charset`
+and falls back to UTF-8. So "verbatim" means verbatim up to undecodable bytes — the one
+place rawfetch alters what it received, stated here rather than hidden.
+
 ## Roadmap
 
 Planned: X threads, Reddit. Website fetch included as a fallback.

@@ -17,7 +17,12 @@ def route(url):
     """Classify url -> ("youtube", video_id) or ("website", None). RawfetchError on junk."""
     if not re.match(r"^https?://", url):
         raise RawfetchError("not an http(s) URL: {}".format(url), EXIT_USAGE)
-    host = re.match(r"^https?://([^/]+)", url).group(1).lower().split(":")[0]
+    m = re.match(r"^https?://([^/]+)", url)
+    if not m:
+        # "https://" and "https:///path" have a scheme but no host. Without this the
+        # regex returns None and the caller sees a bare AttributeError as exit 1.
+        raise RawfetchError("no host in URL: {}".format(url), EXIT_USAGE)
+    host = m.group(1).lower().split(":")[0]
     if host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com"):
         vid = _video_id(url, host)
         if not vid:

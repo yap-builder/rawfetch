@@ -65,10 +65,17 @@ def fetch(video_id, url, languages=None):
 
 
 def _any_available(api, video_id):
-    """Requested languages missing -> first available transcript, else no-captions."""
+    """Requested languages missing -> first available transcript, else no-captions.
+
+    Raises our own error rather than constructing the library's TranscriptsDisabled:
+    its __init__ signature is not part of a stable contract across the 1.x range this
+    package allows, and the tests already have to bypass it with __new__ for that reason.
+    """
     transcripts = list(api.list(video_id))
     if not transcripts:
-        raise TranscriptsDisabled(video_id)
+        raise RawfetchError(
+            "no captions: this video has no transcripts at all "
+            "(subtitles disabled or missing)", EXIT_NO_CAPTIONS)
     return transcripts[0].fetch()
 
 

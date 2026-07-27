@@ -27,21 +27,34 @@ def fetch(url):
         resp = requests.get(url, timeout=30, headers={"User-Agent": UA}, stream=True)
     except requests.RequestException as e:
         raise RawfetchError("website fetch failed: {}".format(e), EXIT_WEBSITE_FAILED)
-    if not 200 <= resp.status_code < 300:
-        raise RawfetchError(
-            "website fetch failed: HTTP {}".format(resp.status_code),
-            EXIT_WEBSITE_FAILED)
-    html = _read_capped(resp)
-    text = extract_text(html)
+    # Closed explicitly: with stream=True the connection stays checked out of the pool
+    # until the body is drained or the response is closed, and the size cap deliberately
+    # stops draining early.
+    try:
+        if not 200 <= resp.status_code < 300:
+            raise RawfetchError(
+                "website fetch failed: HTTP {}".format(resp.status_code),
+                EXIT_WEBSITE_FAILED)
+        payload = _read_capped(resp)
+    finally:
+        resp.close()
+    text = extract_text(payload)
     if not text:
         raise RawfetchError(
             "website fetch failed: no article text extracted "
             "(JS-heavy or paywalled pages are out of scope)", EXIT_WEBSITE_FAILED)
-    return {"title": _title(html), "text": text}
+    return {"title": _title(payload), "text": text}
 
 
 def _read_capped(resp):
-    """Body as text, refusing anything over MAX_BYTES instead of buffering it."""
+    """Body for the extractor, refusing anything over MAX_BYTES instead of buffering it.
+
+    Returns str when the server declared a charset, raw bytes otherwise. Never touches
+    resp.apparent_encoding: that property reads resp.content, which raises once the body
+    has been consumed by iter_content, so using it as a fallback turns a missing
+    Content-Type into an unexpected error. Undeclared bytes go to trafilatura instead,
+    which reads the document's own meta charset and defaults to UTF-8.
+    """
     declared = resp.headers.get("Content-Length") if resp.headers else None
     if declared and declared.isdigit() and int(declared) > MAX_BYTES:
         raise RawfetchError(_too_large(int(declared)), EXIT_WEBSITE_FAILED)
@@ -58,8 +71,12 @@ def _read_capped(resp):
     except requests.RequestException as e:
         raise RawfetchError("website fetch failed: {}".format(e), EXIT_WEBSITE_FAILED)
     raw = b"".join(chunks)
-    encoding = resp.encoding or getattr(resp, "apparent_encoding", None) or "utf-8"
-    return raw.decode(encoding, errors="replace")
+    if resp.encoding:
+        # Header charset wins: it is what the server says the bytes are. Bytes that do
+        # not fit it become U+FFFD rather than killing the run — documented in the README
+        # so "verbatim" does not quietly mean "verbatim except where it wasn't".
+        return raw.decode(resp.encoding, errors="replace")
+    return raw
 
 
 def _too_large(size):

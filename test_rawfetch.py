@@ -34,6 +34,9 @@ def test_route_website(url):
     "ftp://example.com/x",
     "not a url",
     "https://www.youtube.com/feed/history",          # youtube host, no video id
+    "https://",                                      # scheme, no host
+    "http://",
+    "https:///path",                                 # empty host, non-empty path
 ])
 def test_route_rejects_exit2(url):
     with pytest.raises(RawfetchError) as ei:

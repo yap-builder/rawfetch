@@ -1,0 +1,41 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+          pip install -r requirements-dev.txt pycodestyle
+
+      # The suite is offline by design: YouTube gates caption access by IP and CI runners
+      # are datacenter IPs, so live calls would flap. manual_check.py covers the live path
+      # and is run by hand from a residential connection.
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: Style
+        run: python -m pycodestyle --max-line-length=100 rawfetch/ *.py
+
+      - name: Package installs clean and the entry point runs
+        run: |
+          rawfetch --version
+          python -m rawfetch --version

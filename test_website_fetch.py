@@ -19,13 +19,18 @@ class FakeResp:
 
     def __init__(self, status_code, text="", headers=None, encoding="utf-8"):
         self.status_code = status_code
-        self._body = text.encode(encoding) if isinstance(text, str) else text
+        enc = encoding or "utf-8"
+        self._body = text.encode(enc) if isinstance(text, str) else text
         self.headers = headers if headers is not None else {}
         self.encoding = encoding
+        self.closed = False
 
     def iter_content(self, chunk_size=1):
         for i in range(0, len(self._body), chunk_size):
             yield self._body[i:i + chunk_size]
+
+    def close(self):
+        self.closed = True
 
 
 def test_extract_text_from_real_article():
@@ -114,3 +119,43 @@ def test_non_utf8_body_decodes(monkeypatch):
         lambda *a, **k: FakeResp(200, html.encode("latin-1"), encoding="latin-1"))
     out = website_fetch.fetch("https://example.com/latin")
     assert "Ünïcödé" in out["text"]
+
+
+def test_missing_content_type_does_not_crash(monkeypatch):
+    """No charset from the server: bytes go to the extractor, not to apparent_encoding.
+
+    Regression guard. apparent_encoding reads resp.content, which raises once the body
+    has been streamed, so using it as a fallback turned a header-less response into an
+    unexpected error instead of a normal fetch.
+    """
+    html = ("<html><body><article><p>" +
+            "Real sentence with enough words to be extracted properly. " * 8 +
+            "</p></article></body></html>")
+    monkeypatch.setattr(website_fetch.requests, "get",
+                        lambda *a, **k: FakeResp(200, html, encoding=None))
+    out = website_fetch.fetch("https://example.com/no-ctype")
+    assert "Real sentence" in out["text"]
+
+
+def test_response_closed_even_when_cap_trips(monkeypatch):
+    """stream=True holds the connection until close(); the cap stops draining early."""
+    resp = FakeResp(200, "a" * (website_fetch.MAX_BYTES + 1024))
+    monkeypatch.setattr(website_fetch.requests, "get", lambda *a, **k: resp)
+    with pytest.raises(RawfetchError):
+        website_fetch.fetch("https://example.com/huge")
+    assert resp.closed
+
+
+def test_response_closed_on_http_error(monkeypatch):
+    resp = FakeResp(404, "nope")
+    monkeypatch.setattr(website_fetch.requests, "get", lambda *a, **k: resp)
+    with pytest.raises(RawfetchError):
+        website_fetch.fetch("https://example.com/gone")
+    assert resp.closed
+
+
+def test_response_closed_on_success(monkeypatch):
+    resp = FakeResp(200, fixture_html())
+    monkeypatch.setattr(website_fetch.requests, "get", lambda *a, **k: resp)
+    website_fetch.fetch("https://example.com/article")
+    assert resp.closed
