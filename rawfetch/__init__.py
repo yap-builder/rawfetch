@@ -2,8 +2,8 @@
 
 WHY: pasting a YouTube link into an AI assistant gets a guess; rawfetch prints the actual
 captions. Capture, not judgment: raw text to stdout, honest classed errors to stderr
-(no captions != IP block != video gone). YouTube today; X threads and Reddit planned;
-plain websites included as a fallback.
+(no captions != IP block != video gone). YouTube and Reddit (optional extra); X threads
+planned; plain websites included as a fallback.
 """
 import warnings
 
@@ -13,5 +13,5 @@ import warnings
 warnings.filterwarnings(
     "ignore", message="urllib3 v2 only supports OpenSSL", module="urllib3")
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["__version__"]

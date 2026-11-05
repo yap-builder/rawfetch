@@ -9,12 +9,15 @@ import json
 import re
 import sys
 
-from rawfetch import __version__, website_fetch, youtube_fetch
+from rawfetch import __version__, reddit_fetch, website_fetch, youtube_fetch
 from rawfetch.errors import RawfetchError, EXIT_UNEXPECTED, EXIT_USAGE
 
 
 def route(url):
-    """Classify url -> ("youtube", video_id) or ("website", None). RawfetchError on junk."""
+    """Classify url -> ("youtube", video_id), ("reddit", None) or ("website", None).
+
+    RawfetchError on junk. Lookalike hosts (notreddit.com, myyoutube.com) are websites.
+    """
     # Scheme is case-insensitive per RFC 3986; browsers and curl accept HTTPS://.
     if not re.match(r"^https?://", url, re.IGNORECASE):
         raise RawfetchError("not an http(s) URL: {}".format(url), EXIT_USAGE)
@@ -24,6 +27,8 @@ def route(url):
         # regex returns None and the caller sees a bare AttributeError as exit 1.
         raise RawfetchError("no host in URL: {}".format(url), EXIT_USAGE)
     host = m.group(1).lower().split(":")[0]
+    if host in ("reddit.com", "redd.it") or host.endswith(".reddit.com"):
+        return "reddit", None
     if host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com"):
         vid = _video_id(url, host)
         if not vid:
@@ -47,8 +52,9 @@ def _video_id(url, host):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="rawfetch",
-        description="Print verbatim text from a URL: YouTube captions, or the "
-                    "article text of a plain web page. No LLM, no summaries.")
+        description="Print verbatim text from a URL: YouTube captions, a Reddit post "
+                    "with its top comments (or a list of posts), or the article text "
+                    "of a plain web page. No LLM, no summaries.")
     parser.add_argument("url")
     parser.add_argument("--lang", metavar="ru,en",
                         help="caption language priority for YouTube (ordered)")
@@ -63,6 +69,8 @@ def main(argv=None):
             languages = ([s.strip() for s in args.lang.split(",") if s.strip()]
                          if args.lang else None)
             result = youtube_fetch.fetch(video_id, args.url, languages=languages)
+        elif source_type == "reddit":
+            result = reddit_fetch.fetch(args.url)
         else:
             result = website_fetch.fetch(args.url)
     except RawfetchError as e:

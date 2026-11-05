@@ -8,6 +8,7 @@ EXIT_BLOCKED = 4
 EXIT_UNAVAILABLE = 5
 EXIT_WEBSITE_FAILED = 6
 EXIT_NETWORK = 7
+EXIT_NOT_INSTALLED = 8  # an optional source (Reddit) was asked for but is not installed
 
 
 class RawfetchError(Exception):

@@ -39,3 +39,16 @@ jobs:
         run: |
           rawfetch --version
           python -m rawfetch --version
+
+      # The installer is the front door for most users; run it the way an agent would.
+      # Core only: Reddit needs a 300 MB browser and live Reddit, neither belongs in CI.
+      - name: Installer (core only) works and Reddit without the extra is exit 8
+        run: |
+          bash -n install.sh
+          ./install.sh --no-reddit
+          .venv/bin/rawfetch --version
+          set +e
+          .venv/bin/rawfetch https://www.reddit.com/r/python/
+          code=$?
+          set -e
+          test "$code" -eq 8

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rawfetch"
-version = "0.2.0"
+version = "0.3.0"
 description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [{name = "yap-builder"}]
-keywords = ["youtube", "transcript", "captions", "scraping", "verbatim", "cli", "agents"]
+keywords = ["youtube", "reddit", "transcript", "captions", "scraping", "verbatim", "cli", "agents"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -31,6 +31,11 @@ dependencies = [
     "lxml-html-clean==0.4.5",
     "requests>=2.31",
 ]
+
+[project.optional-dependencies]
+# Reddit needs a real browser engine: `pip install 'rawfetch[reddit]'`, then
+# `playwright install webkit` (~300 MB download). Kept optional so YouTube/web stay light.
+reddit = ["playwright>=1.40,<2"]
 
 [project.urls]
 Homepage = "https://github.com/yap-builder/rawfetch"
