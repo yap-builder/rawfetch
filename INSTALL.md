@@ -54,8 +54,8 @@ Only edit their profile if they ask you to.
 | `rawfetch needs Python 3.9 or newer` | Install Python 3.9+ (python.org, or the system package manager), then re-run the installer. |
 | "Could not create a virtual environment" (Debian/Ubuntu) | Ask the person, then `sudo apt install python3-venv` and re-run the installer. |
 | `exit 8` / "Reddit support is not installed" | Run `./install.sh --reddit`. |
-| Linux: browser fails to start, mentions missing libraries | Run `sudo .venv/bin/playwright install-deps webkit` — ask the person first, it needs sudo. |
-| `exit 4` on a Reddit link | Reddit's bot protection or rate limit. Stop. Do not retry in a loop. A block on search can last more than a day; a post link may still work. |
+| Linux: the installer says the browser engine does not start, or `exit 8` mentions missing libraries | Run `sudo .venv/bin/playwright install-deps webkit` — ask the person first, it needs sudo (as root, drop `sudo`). |
+| `exit 4` on a Reddit link | Reddit's bot protection or rate limit. Stop. Do not retry in a loop. A block on search can last more than a day; a post link may still work. On a server or cloud machine Reddit blocks the address itself: ask the person for a residential proxy and set `HTTPS_PROXY`. |
 | `exit 7` | Network never reached the source: check the connection or any `HTTPS_PROXY` setting. |
 | `playwright install webkit` fails mid-download | Re-run `./install.sh --reddit`; it retries the download. |
 

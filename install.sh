@@ -88,7 +88,15 @@ fi
 # --- verify ------------------------------------------------------------------------------
 "$VENV/bin/rawfetch" --version
 if [ "$REDDIT" = "yes" ]; then
-  "$VENV/bin/python" -c "import playwright" && say "Reddit support: installed"
+  # Start the browser once: on Linux it is often downloaded fine but lacks system libraries.
+  if "$VENV/bin/python" -c 'from playwright.sync_api import sync_playwright as s
+with s() as p: p.webkit.launch(headless=True).close()' >/dev/null 2>&1; then
+    say "Reddit support: installed (browser engine starts)"
+  else
+    say "Reddit support: installed, but the browser engine does not start on this system."
+    say "On Linux this is usually missing system libraries. Install them once with:"
+    say "  sudo $VENV/bin/playwright install-deps webkit     (drop sudo if you are root)"
+  fi
 else
   say "Reddit support: not installed (run ./install.sh --reddit to add it later)"
 fi

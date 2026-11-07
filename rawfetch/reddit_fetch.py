@@ -19,6 +19,7 @@ download), imported lazily so the YouTube and website paths never need it.
 """
 import os
 import re
+import sys
 import time
 from urllib.parse import urlsplit, urlunsplit
 
@@ -37,6 +38,9 @@ POST_PATH = re.compile(r"^/(?:(?:r|user|u)/[^/]+/)?comments/[a-z0-9]+", re.IGNOR
 # Wait for the page to show content, not a fixed sleep: Reddit sometimes serves a JS
 # challenge first and redirects to the real page a few seconds later.
 CONTENT_SELECTOR = "shreddit-post, shreddit-comment, a[href*='/comments/']"
+SEARCH_BLOCK_HINT = "Search pages are blocked first; a post link may still work."
+ADDRESS_BLOCK_HINT = ("From a server or cloud machine Reddit blocks the address itself: "
+                      "run from a home connection or set HTTPS_PROXY to a residential proxy.")
 SETTLE_SECONDS = 30
 # Gentle scrolling lets the lazily-rendered comments appear. Measured 2026-11-04: on
 # posts with 92, 173 and 1674 comments this settles at ~34 rendered comments every time.
@@ -126,8 +130,9 @@ def _browse(url):
         try:
             browser = p.webkit.launch(headless=True, proxy=_proxy_from_env())
         except PwError as e:
-            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
-                raise RawfetchError(INSTALL_HINT, EXIT_NOT_INSTALLED)
+            err = launch_error(str(e))
+            if err:
+                raise err
             raise
         try:
             page = browser.new_context(user_agent=UA, locale="en-US",
@@ -146,6 +151,20 @@ def _browse(url):
             return check_result(url, page.url, data, _safe_title(page), _body_text(page), status)
         finally:
             browser.close()
+
+
+def launch_error(message):
+    """Turn a browser-launch failure the user can fix into exit 8 with the fix; else None."""
+    if "missing dependencies" in message or "missing libraries" in message.lower():
+        playwright_bin = os.path.join(os.path.dirname(sys.executable), "playwright")
+        return RawfetchError(
+            "Reddit's browser engine is installed, but this system lacks libraries it needs "
+            "(common on Linux servers and containers). Install them once with:\n"
+            "  sudo {} install-deps webkit\n(drop sudo if you are root)".format(playwright_bin),
+            EXIT_NOT_INSTALLED)
+    if "Executable doesn't exist" in message or "playwright install" in message:
+        return RawfetchError(INSTALL_HINT, EXIT_NOT_INSTALLED)
+    return None
 
 
 def _wait_for_content(page):
@@ -204,7 +223,11 @@ def check_result(requested_url, final_url, data, title, text, http_status):
         if not err:
             err = RawfetchError(
                 "reddit fetch failed: the page loaded but listed no posts", EXIT_WEBSITE_FAILED)
-        raise RawfetchError("{} ({})".format(err, _what_reddit_said(http_status, title)),
+        hint = ""
+        if err.exit_code == EXIT_BLOCKED:
+            hint = " " + (SEARCH_BLOCK_HINT if "/search" in urlsplit(requested_url).path
+                          else ADDRESS_BLOCK_HINT)
+        raise RawfetchError("{}{} ({})".format(err, hint, _what_reddit_said(http_status, title)),
                             err.exit_code)
     return data
 
@@ -237,8 +260,8 @@ def classify_failure(title, text, http_status=None):
     """Map a page that yielded nothing to an exit class; None when it looks normal."""
     blob = "{}\n{}".format(title or "", text or "").lower()
     blocked = RawfetchError(
-        "blocked by Reddit (bot protection / rate limit) — wait a while before retrying; "
-        "search pages are blocked first, a post link may still work", EXIT_BLOCKED)
+        "blocked by Reddit (bot protection / rate limit) — wait a while before retrying.",
+        EXIT_BLOCKED)
     gone = RawfetchError(
         "reddit post or community unavailable (deleted, removed, private, or not found)",
         EXIT_UNAVAILABLE)

@@ -291,6 +291,41 @@ def test_empty_listing_error_names_status():
     assert "no HTTP status" in str(ei.value)
 
 
-def test_blocked_error_says_post_links_may_still_work():
-    err = reddit_fetch.classify_failure("Blocked", "blocked by network security", 403)
-    assert "search" in str(err) and "post link" in str(err)
+# --- launch failures and block hints (found by the Linux beta test) ------------------------
+
+LINUX_DEPS_ERROR = ("BrowserType.launch: \n\n Host system is missing dependencies to run "
+                    "browsers. \n Missing libraries: \n     libgstreamer-1.0.so.0 \n")
+
+
+def test_missing_linux_libraries_is_exit8_with_install_deps_hint():
+    err = reddit_fetch.launch_error(LINUX_DEPS_ERROR)
+    assert err.exit_code == 8
+    assert "install-deps webkit" in str(err)
+
+
+def test_missing_browser_binary_is_exit8_with_install_hint():
+    err = reddit_fetch.launch_error("Executable doesn't exist at /x/webkit/pw_run.sh")
+    assert err.exit_code == 8
+    assert "playwright install webkit" in str(err)
+
+
+def test_other_launch_errors_are_not_masked():
+    assert reddit_fetch.launch_error("some other failure") is None
+
+
+def _blocked(url):
+    with pytest.raises(RawfetchError) as ei:
+        reddit_fetch.check_result(url, url, dict(LISTING, posts=[]), "", "", 403)
+    assert ei.value.exit_code == 4
+    return str(ei.value)
+
+
+def test_blocked_search_says_post_links_may_still_work():
+    msg = _blocked("https://www.reddit.com/search/?q=x")
+    assert "search" in msg.lower() and "post link" in msg
+
+
+def test_blocked_post_points_to_home_connection_or_proxy():
+    msg = _blocked(POST_URL)
+    assert "HTTPS_PROXY" in msg and "residential proxy" in msg
+    assert "post link may still work" not in msg
