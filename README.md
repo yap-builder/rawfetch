@@ -181,12 +181,16 @@ Limits worth knowing:
   reading tool: low volume, anonymous, read-only. Don't republish what it fetches.
 - **It can break.** It reads the page Reddit renders today; if Reddit changes its markup
   or its bot checks, this path may stop working until updated.
+- **Servers and cloud machines.** Reddit blocks many datacenter addresses outright —
+  every page, not just search — so from a VPS or a cloud agent expect exit code 4. Run it
+  from a home connection, or set `HTTPS_PROXY` to a residential proxy (see Proxies; we
+  have not tested Reddit through one).
 - **Linux:** if the browser fails to start with missing system libraries, run
   `sudo .venv/bin/playwright install-deps webkit` once.
 
 ## Website fallback
 
-Any non-YouTube URL is fetched as a plain web page and the main article text
+Any URL that is not YouTube or Reddit is fetched as a plain web page and the main article text
 is extracted verbatim. Static articles and blog posts work; JS-heavy apps and
 paywalled pages may extract to nothing — rawfetch reports that honestly (exit
 code 6) instead of inventing content.
