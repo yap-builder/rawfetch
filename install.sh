@@ -20,7 +20,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --reddit) REDDIT="yes" ;;
     --no-reddit) REDDIT="no" ;;
-    --venv) shift; VENV="${1:?--venv needs a directory}" ;;
+    --venv)
+      if [ $# -lt 2 ] || [ -z "$2" ]; then
+        echo "install.sh: --venv needs a directory (try --help)" >&2; exit 2
+      fi
+      shift; VENV="$1" ;;
     -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "install.sh: unknown option: $1 (try --help)" >&2; exit 2 ;;
   esac
@@ -75,6 +79,7 @@ if [ ! -x "$VENV/bin/python" ] && ! "$PY" -m venv "$VENV"; then
   say "  sudo apt install python3-venv     then run ./install.sh again" >&2
   exit 1
 fi
+VENV="$(cd "$VENV" && pwd)"  # clean path (no ../) for the instructions printed at the end
 "$VENV/bin/python" -m pip install --quiet --upgrade pip
 cd "$ROOT"  # ".[reddit]" from inside the repo: an absolute path with spaces + [extras] confuses pip
 if [ "$REDDIT" = "yes" ]; then
@@ -103,6 +108,6 @@ fi
 
 say ""
 say "Done. Run it as:"
-say "  $VENV/bin/rawfetch <url>"
+say "  \"$VENV/bin/rawfetch\" <url>"
 say "To type just 'rawfetch', add this line to your shell profile:"
 say "  export PATH=\"$VENV/bin:\$PATH\""

@@ -90,7 +90,8 @@ $ rawfetch https://www.youtube.com/watch?v=jNQXAC9IVRw --json
 ```
 
 If none of the requested `--lang` languages exist, rawfetch falls back to any
-available transcript; it fails only when the video has no captions at all.
+available transcript (which may be in another language); it fails only when the video
+has no captions at all.
 
 ## Exit codes
 
@@ -185,6 +186,9 @@ Limits worth knowing:
   every page, not just search — so from a VPS or a cloud agent expect exit code 4. Run it
   from a home connection, or set `HTTPS_PROXY` to a residential proxy (see Proxies; we
   have not tested Reddit through one).
+- **macOS warning you can ignore:** on some macOS versions the browser download prints
+  "You are using a frozen webkit browser which does not receive updates anymore". That
+  comes from Playwright, not rawfetch; Reddit fetching works regardless.
 - **Linux:** if the browser fails to start with missing system libraries, run
   `sudo .venv/bin/playwright install-deps webkit` once.
 

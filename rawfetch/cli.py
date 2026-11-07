@@ -20,7 +20,10 @@ def route(url):
     """
     # Scheme is case-insensitive per RFC 3986; browsers and curl accept HTTPS://.
     if not re.match(r"^https?://", url, re.IGNORECASE):
-        raise RawfetchError("not an http(s) URL: {}".format(url), EXIT_USAGE)
+        hint = ""
+        if re.match(r"^[\w-]+(\.[\w-]+)+(/\S*)?$", url):  # looks like a bare domain
+            hint = " — did you mean https://{} ?".format(url)
+        raise RawfetchError("not an http(s) URL: {}{}".format(url, hint), EXIT_USAGE)
     m = re.match(r"^https?://([^/]+)", url, re.IGNORECASE)
     if not m:
         # "https://" and "https:///path" have a scheme but no host. Without this the

@@ -5,7 +5,7 @@ import socket
 import pytest
 
 from rawfetch import cli
-from rawfetch.errors import RawfetchError
+from rawfetch.errors import RawfetchError, network_error
 
 
 @pytest.mark.parametrize("url,vid", [
@@ -140,3 +140,37 @@ def test_version_flag_prints_version(capsys):
         cli.main(["--version"])
     assert ei.value.code == 0
     assert "rawfetch" in capsys.readouterr().out
+
+
+# --- found by the QA pass: newcomer-friendly messages --------------------------------------
+
+def test_bare_domain_suggests_https():
+    with pytest.raises(RawfetchError) as ei:
+        cli.route("example.com/page")
+    assert ei.value.exit_code == 2
+    assert "did you mean https://example.com/page" in str(ei.value)
+
+
+def test_plain_word_gets_no_suggestion():
+    with pytest.raises(RawfetchError) as ei:
+        cli.route("hello")
+    assert "did you mean" not in str(ei.value)
+
+
+@pytest.mark.parametrize("raw,short", [
+    ("HTTPSConnectionPool(host='x.invalid', port=443): Max retries exceeded "
+     "(Caused by NameResolutionError(\"Failed to resolve 'x.invalid'\"))",
+     "could not resolve the host name"),
+    ("HTTPConnectionPool(host='localhost', port=9): Max retries exceeded "
+     "(Caused by NewConnectionError('[Errno 61] Connection refused'))",
+     "connection refused"),
+    ("HTTPSConnectionPool(host='a.b', port=443): Read timed out. (read timeout=20)",
+     "timed out"),
+])
+def test_network_error_is_short_and_plain(raw, short, monkeypatch):
+    for var in ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "ALL_PROXY",
+                "all_proxy"):
+        monkeypatch.delenv(var, raising=False)
+    msg = str(network_error(Exception(raw)))
+    assert msg.startswith("network error: could not reach the source: " + short)
+    assert "Max retries" not in msg

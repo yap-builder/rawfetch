@@ -31,5 +31,24 @@ def network_error(exc):
     hint = ("; note: a proxy from the environment is in effect for: "
             + ", ".join(schemes)) if schemes else ""
     return RawfetchError(
-        "network error: could not reach the source: {}{}".format(exc, hint),
+        "network error: could not reach the source: {}{}".format(_plain_reason(exc), hint),
         EXIT_NETWORK)
+
+
+# Library exceptions are one long line of nested reprs; name the cause instead.
+_REASONS = (
+    (("NameResolutionError", "Name or service not known", "nodename nor servname",
+      "getaddrinfo failed", "Temporary failure in name resolution"),
+     "could not resolve the host name"),
+    (("Connection refused", "ConnectionRefusedError"), "connection refused"),
+    (("timed out", "Timeout"), "timed out"),
+    (("ProxyError", "Tunnel connection failed"), "the proxy failed"),
+)
+
+
+def _plain_reason(exc):
+    text = str(exc)
+    for needles, reason in _REASONS:
+        if any(n in text for n in needles):
+            return reason
+    return text if len(text) <= 300 else text[:300] + "…"
