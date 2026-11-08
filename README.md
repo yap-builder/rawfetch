@@ -184,8 +184,8 @@ Limits worth knowing:
   or its bot checks, this path may stop working until updated.
 - **Servers and cloud machines.** Reddit blocks many datacenter addresses outright —
   every page, not just search — so from a VPS or a cloud agent expect exit code 4. Run it
-  from a home connection, or set `HTTPS_PROXY` to a residential proxy (see Proxies; we
-  have not tested Reddit through one).
+  from a home connection, or set `HTTPS_PROXY` to a residential proxy (see Proxies;
+  tested on a Linux server: posts and subreddit pages work through one).
 - **macOS warning you can ignore:** on some macOS versions the browser download prints
   "You are using a frozen webkit browser which does not receive updates anymore". That
   comes from Playwright, not rawfetch; Reddit fetching works regardless.
