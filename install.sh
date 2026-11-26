@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rawfetch installer — choose which sources to install.
+# rawfetch installer: choose which sources to install.
 #
 # YouTube captions and web articles are always included (small, pure Python).
 # Reddit is optional: it needs a real browser engine (Playwright WebKit, ~300 MB).

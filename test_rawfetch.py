@@ -102,7 +102,7 @@ def test_main_unexpected_exit1(monkeypatch, capsys):
 
 
 def _refused_local_port():
-    """A localhost port that was just free — connecting to it gets refused, fast."""
+    """A localhost port that was just free; connecting to it gets refused, fast."""
     s = socket.socket()
     s.bind(("127.0.0.1", 0))
     port = s.getsockname()[1]

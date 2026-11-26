@@ -1,9 +1,9 @@
-"""rawfetch — verbatim text from sources your AI can't reach. One command, zero LLM.
+"""rawfetch: paste a link, get the verbatim text. No AI model runs inside it.
 
-WHY: pasting a YouTube link into an AI assistant gets a guess; rawfetch prints the actual
-captions. Capture, not judgment: raw text to stdout, honest classed errors to stderr
-(no captions != IP block != video gone). YouTube and Reddit (optional extra); X threads
-planned; plain websites included as a fallback.
+WHY: pasting a YouTube link into an AI assistant often gets a guess; rawfetch prints the
+actual captions. Capture, not judgment: raw text to stdout, honest classed errors to
+stderr (no captions != IP block != video gone). YouTube and Reddit (optional extra), plus
+plain websites as a fallback.
 """
 import warnings
 

@@ -24,8 +24,8 @@ def network_error(exc):
 
     Distinct from "reached the source and it said no": exit 7 means the request never
     got an answer at all. When env proxies (HTTPS_PROXY/HTTP_PROXY) are in effect the
-    message says so, because a broken proxy is the most likely culprit then — but only
-    the scheme names are printed: proxy URLs routinely carry user:pass credentials.
+    message says so, because a broken proxy is the most likely culprit then. Only the
+    scheme names are printed, since proxy URLs routinely carry user:pass credentials.
     """
     schemes = sorted(getproxies_environment())
     hint = ("; note: a proxy from the environment is in effect for: "

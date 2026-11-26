@@ -1,4 +1,4 @@
-# Installing rawfetch — instructions for an AI agent
+# Installing rawfetch: instructions for an AI agent
 
 You are installing rawfetch for a person. Follow these steps in order. Run commands from
 the repository root (the folder that contains `install.sh`).
@@ -7,7 +7,7 @@ the repository root (the folder that contains `install.sh`).
 
 Ask the person: **"Do you want Reddit support? It downloads a browser engine, about
 300 MB."** YouTube captions and web articles are always included; only Reddit is
-optional. Do not guess — the download is large.
+optional. Do not guess: the download is large.
 
 ## 2. Run the installer with the matching flag
 
@@ -29,7 +29,7 @@ no sudo, and is safe to re-run (re-running with `--reddit` later adds Reddit).
 Expected: the version line (`rawfetch 0.3.0` or newer), then the text of "The Zen of
 Python" (it contains "Beautiful is better than ugly").
 
-If Reddit was installed, also run exactly one Reddit fetch — a link to a public post
+If Reddit was installed, also run exactly one Reddit fetch: a link to a public post
 the person cares about (`https://www.reddit.com/r/<sub>/comments/<id>/...`).
 
 Expected, after about 20 seconds: the post title, its text, then its top comments.
@@ -54,7 +54,7 @@ Only edit their profile if they ask you to.
 | `rawfetch needs Python 3.9 or newer` | Install Python 3.9+ (python.org, or the system package manager), then re-run the installer. |
 | "Could not create a virtual environment" (Debian/Ubuntu) | Ask the person, then `sudo apt install python3-venv` and re-run the installer. |
 | `exit 8` / "Reddit support is not installed" | Run `./install.sh --reddit`. |
-| Linux: the installer says the browser engine does not start, or `exit 8` mentions missing libraries | Run `sudo .venv/bin/playwright install-deps webkit` — ask the person first, it needs sudo (as root, drop `sudo`). |
+| Linux: the installer says the browser engine does not start, or `exit 8` mentions missing libraries | Run `sudo .venv/bin/playwright install-deps webkit`. Ask the person first, it needs sudo (as root, drop `sudo`). |
 | `exit 4` on a Reddit link | Reddit's bot protection or rate limit. Stop. Do not retry in a loop. A block on search can last more than a day; a post link may still work. On a server or cloud machine Reddit blocks the address itself: ask the person for a residential proxy and set `HTTPS_PROXY`. |
 | `exit 7` | Network never reached the source: check the connection or any `HTTPS_PROXY` setting. |
 | `playwright install webkit` fails mid-download | Re-run `./install.sh --reddit`; it retries the download. |

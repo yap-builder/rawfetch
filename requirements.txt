@@ -1,4 +1,4 @@
-# Runtime dependencies live in pyproject.toml — that is the single source of truth.
+# Runtime dependencies live in pyproject.toml; that is the single source of truth.
 # This file only exists so `pip install -r requirements.txt` does the expected thing;
 # a second copy of the pin list here would let the two drift apart silently.
 .

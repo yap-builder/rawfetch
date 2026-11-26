@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Command line entry point: route a URL to the right adapter, print verbatim text.
 
-Routing is deliberately dumb and readable — host match, then video id — so a reader can
+Routing is deliberately dumb and readable (host match, then video id) so a reader can
 tell at a glance which source a URL will hit. No network happens in this module.
 """
 import argparse
@@ -22,7 +22,7 @@ def route(url):
     if not re.match(r"^https?://", url, re.IGNORECASE):
         hint = ""
         if re.match(r"^[\w-]+(\.[\w-]+)+(/\S*)?$", url):  # looks like a bare domain
-            hint = " — did you mean https://{} ?".format(url)
+            hint = "; did you mean https://{} ?".format(url)
         raise RawfetchError("not an http(s) URL: {}{}".format(url, hint), EXIT_USAGE)
     m = re.match(r"^https?://([^/]+)", url, re.IGNORECASE)
     if not m:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Website adapter for rawfetch: quiet fallback for static articles.
 
-WHY: not the headline (AI assistants already fetch the web) — kept so `rawfetch <any-url>`
+WHY: not the headline (AI assistants already fetch the web). Kept so `rawfetch <any-url>`
 still answers with verbatim article text. Static pages only: JS-heavy SPAs and paywalls
 may extract to nothing, and that is reported as an honest error, never invented text.
 
@@ -76,7 +76,7 @@ def _read_capped(resp):
     raw = b"".join(chunks)
     if resp.encoding:
         # Header charset wins: it is what the server says the bytes are. Bytes that do
-        # not fit it become U+FFFD rather than killing the run — documented in the README
+        # not fit it become U+FFFD rather than killing the run; documented in the README
         # so "verbatim" does not quietly mean "verbatim except where it wasn't".
         return raw.decode(resp.encoding, errors="replace")
     return raw
@@ -85,7 +85,7 @@ def _read_capped(resp):
 def _too_large(size):
     limit = MAX_BYTES // (1024 * 1024)
     seen = " ({} bytes declared)".format(size) if size else ""
-    return ("website fetch failed: page larger than {} MiB{} — refusing to buffer it "
+    return ("website fetch failed: page larger than {} MiB{}, refusing to buffer it "
             "(rawfetch targets articles, not bulk downloads)".format(limit, seen))
 
 

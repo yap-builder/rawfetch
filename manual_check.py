@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Manual LIVE check for rawfetch — deliberately NOT pytest.
+"""Manual LIVE check for rawfetch, deliberately NOT pytest.
 
 WHY: YouTube captions are IP-gated (datacenter IPs get blocked), so live calls in the
 test suite would flap on CI. Run this by hand on a residential IP and eyeball that the
 output is verbatim. Usage: python3 manual_check.py [youtube_url] [article_url]
 
 Reddit cases run only when the `reddit` extra is installed, and only two of them, spaced
-out: this is an eyeball check, not a load test — repeated requests get an IP blocked.
+out: this is an eyeball check, not a load test; repeated requests get an IP blocked.
 
 Uses sys.executable, not a hardcoded interpreter path: the dependencies live in whatever
 environment you installed into, which is usually a venv and almost never /usr/bin/python3.

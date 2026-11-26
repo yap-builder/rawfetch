@@ -260,7 +260,7 @@ def classify_failure(title, text, http_status=None):
     """Map a page that yielded nothing to an exit class; None when it looks normal."""
     blob = "{}\n{}".format(title or "", text or "").lower()
     blocked = RawfetchError(
-        "blocked by Reddit (bot protection / rate limit) — wait a while before retrying.",
+        "blocked by Reddit (bot protection / rate limit). Wait a while before retrying.",
         EXIT_BLOCKED)
     gone = RawfetchError(
         "reddit post or community unavailable (deleted, removed, private, or not found)",

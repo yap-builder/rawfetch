@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rawfetch"
 version = "0.3.0"
-description = "Grab verbatim text from sources your AI can't reach — one command, zero LLM."
+description = "Paste a link, get the verbatim text: YouTube captions, Reddit threads with comments, articles."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"

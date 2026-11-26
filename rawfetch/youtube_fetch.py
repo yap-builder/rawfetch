@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """YouTube transcript adapter for rawfetch (verbatim capture, zero LLM).
 
-WHY: an AI assistant can't pull YouTube captions itself — this adapter turns a video URL
+WHY: an AI assistant can't pull YouTube captions itself. This adapter turns a video URL
 into the raw caption text. Capture, not judgment: plain space-join of caption snippets,
 no cleanup. Errors are classed (no captions != IP block != video gone) so the user can
 tell what actually happened. Title comes from keyless oEmbed and is never fatal.
@@ -59,7 +59,7 @@ def fetch(video_id, url, languages=None):
     except requests.RequestException as e:
         # The library talks to YouTube through requests, honouring HTTPS_PROXY /
         # HTTP_PROXY from the environment. DNS failures, refused connections,
-        # timeouts and dead proxies all surface here — a different fact than
+        # timeouts and dead proxies all surface here, a different fact than
         # "YouTube answered and said no" (exit 4/5).
         raise network_error(e)
     text = " ".join(s.text for s in transcript.snippets)

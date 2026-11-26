@@ -136,7 +136,7 @@ def test_transport_errors_exit7(monkeypatch, transport_exc):
 
 
 def test_network_error_names_proxy_scheme_never_credentials(monkeypatch):
-    """When env proxies are in effect the message says so — but proxy URLs can carry
+    """When env proxies are in effect the message says so, but proxy URLs can carry
     user:pass, so only the scheme names may appear, never the values."""
     monkeypatch.setenv("HTTPS_PROXY", "http://user:sekretpass@127.0.0.1:9")
     api = make_api(fetch_raises=requests.exceptions.ProxyError("boom"))
