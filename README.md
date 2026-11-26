@@ -1,6 +1,6 @@
 # rawfetch
 
-**Paste a link, get the verbatim text: YouTube captions, Reddit threads with comments, articles.**
+**Paste a link, get the verbatim text for you or your AI agent: YouTube captions, Reddit threads with comments, articles.**
 
 ```
 $ rawfetch https://www.youtube.com/watch?v=jNQXAC9IVRw
